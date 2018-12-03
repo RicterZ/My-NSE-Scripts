@@ -2,4 +2,5 @@
 
 Scripts List:
 
-+ [uwsgi_detect.nse](scripts/uwsgi_detect.nse)
++ [uwsgi-detect.nse](scripts/uwsgi-detect.nse)
++ [fastcgi-detect.nse](scripts/fastcgi-detect.nse)

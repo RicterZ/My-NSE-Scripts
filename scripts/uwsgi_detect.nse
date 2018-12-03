@@ -3,7 +3,7 @@ Detect uWSGI Server
 ]]
 
 author = "Ricter Zheng"
-license = "MIT"
+license = "Same as https://github.com/RicterZ/My-NSE-Scripts/blob/master/LICENSE"
 categories = {"default", "safe"}
 
 

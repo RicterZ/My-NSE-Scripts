@@ -34,7 +34,12 @@ action = function(host, port)
 	local status_code = string.match(ret, "Primary script unknown")
 
 	try(client:close())
-	return "Server Response: " .. status_code
+
+	if status_code ~= nil then
+		return "Server Response: " .. status_code
+	end
+
+	return false
 
 end
 

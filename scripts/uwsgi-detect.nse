@@ -27,10 +27,19 @@ action = function(host, port)
 
 	local ret = try(client:receive_lines(1))
 
-	local status_code = string.match(ret, "HTTP/1.%d %d+")
+	local status_code = "400"
+	for word in string.gmatch(ret, "HTTP/1.%d (%d+)") do
+		status_code = word
+		break
+	end
 
 	try(client:close())
-	return status_code
+
+	if status_code ~= "400" then
+		return "uWSGI returns code " .. status_code
+	end
+
+	return false
 
 end
 

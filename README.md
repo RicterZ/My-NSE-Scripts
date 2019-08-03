@@ -8,7 +8,7 @@ Scripts List:
 
 Usage:
 
-    ^^/D/My-NSE-Scripts >>> nmap localhost -p9000 --script=+scripts/                                                                                 (*master+13) 17:09:50 
+    ^^/D/My-NSE-Scripts >>> nmap localhost -p9000 --script=+scripts/
 
     Starting Nmap 7.60 ( https://nmap.org ) at 2019-08-03 17:09 CST
     Nmap scan report for localhost (127.0.0.1)

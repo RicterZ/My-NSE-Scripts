@@ -1,4 +1,7 @@
 local http = require "http"
+local nmap = require "nmap"
+local string = require "string"
+
 
 description = [[
 ]]

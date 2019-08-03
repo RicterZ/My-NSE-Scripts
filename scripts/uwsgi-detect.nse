@@ -1,4 +1,7 @@
 local bit = require "bit"
+local nmap = require "nmap"
+local string = require "string"
+
 
 description = [[
 Detect uWSGI Server

@@ -1,5 +1,9 @@
+local shortport = require "shortport"
+local nmap = require "nmap"
+local string = require "string"
+
 description = [[
-FastCGI Daemon Detect
+PHP-FPM Daemon Detect
 ]]
 
 author = "Ricter Zheng"
@@ -7,10 +11,7 @@ license = "Same as https://github.com/RicterZ/My-NSE-Scripts/blob/master/LICENSE
 categories = {"default", "safe"}
 
 
-portrule = function(host, port)
-	return true
-end
-
+portrule = shortport.port_or_service(9000, "tcp")
 
 action = function(host, port)
 	local client = nmap.new_socket()
@@ -29,17 +30,20 @@ action = function(host, port)
 	try(client:connect(host, port))
 	try(client:send(data))
 
-	local ret = try(client:receive_lines(1))
-
-	local status_code = string.match(ret, "Primary script unknown")
-
+	status, ret = client:receive_lines(1)
 	try(client:close())
 
-	if status_code ~= nil then
-		return "Server Response: " .. status_code
+	if status == false then
+		return "not a PHP-FPM daemon"
 	end
 
-	return false
+	local ret = string.match(ret, "Primary script unknown")
+
+	if ret ~= nil then
+		return "PHP-FPM daemon detected"
+	end
+
+	return "not a PHP-FPM daemon"
 
 end
 

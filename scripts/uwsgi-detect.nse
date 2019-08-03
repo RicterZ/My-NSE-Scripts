@@ -55,7 +55,7 @@ end
 
 
 portrule = function(host, port)
-	return port.service ~= "tcp"
+	return true
 end
 
 

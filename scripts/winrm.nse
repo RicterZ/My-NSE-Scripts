@@ -26,6 +26,11 @@ action = function(host, port)
         local try = nmap.new_try(catch)
 
 	local res = http.generic_request(host, port, 'GET', '/wsman', nil)
+
+	if res.status == nil then
+		return "WinRM not exists (not a HTTP/S service)"
+	end
+
 	if res.status ~= 405 then
 		return "WinRM not exists (/wsman returns " .. res.status .. ")"
 	end

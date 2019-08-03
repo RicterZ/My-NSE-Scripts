@@ -8,7 +8,16 @@ Scripts List:
 
 Usage:
 
-    nmap -d target -p 9000 --script=+scripts/
-    #                               ^
-    # '+' is necessary
+    ^^/D/My-NSE-Scripts >>> nmap localhost -p9000 --script=+scripts/                                                                                 (*master+13) 17:09:50 
 
+    Starting Nmap 7.60 ( https://nmap.org ) at 2019-08-03 17:09 CST
+    Nmap scan report for localhost (127.0.0.1)
+    Host is up (0.000047s latency).
+
+    PORT     STATE SERVICE
+    9000/tcp open  cslistener
+    |_php-fpm: PHP-FPM daemon detected
+    |_uwsgi-detect: not a uWSGI daemon (unknown)
+    |_winrm: WinRM not exists (not a HTTP/S service)
+
+    Nmap done: 1 IP address (1 host up) scanned in 1.15 seconds

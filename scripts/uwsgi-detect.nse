@@ -1,3 +1,5 @@
+local bit = require "bit"
+
 description = [[
 Detect uWSGI Server
 ]]
@@ -7,35 +9,106 @@ license = "Same as https://github.com/RicterZ/My-NSE-Scripts/blob/master/LICENSE
 categories = {"default", "safe"}
 
 
+function string.fromhex(str)
+    return (str:gsub('..', function (cc)
+        return string.char(tonumber(cc, 16))
+    end))
+end
+
+
+function make_headers_http(t) 
+	local ret = "GET / HTTP/1.0\r\n"
+	for k, v in pairs(t) do
+		ret = ret .. k .. ":" .. v .. "\r\n"
+	end
+
+	ret = ret .. "\r\n"
+	return ret
+end
+
+
+function make_headers_scgi(t)
+	local ret = ""
+	for k, v in pairs(t) do
+		ret = ret .. k .. "\x00" .. v .. "\x00"
+	end
+	ret = string.len(ret) .. ":" .. ret .. ",nmap"
+	return ret
+end
+
+
+function make_headers_uwsgi(t)
+	local ret = ""
+	for k, v in pairs(t) do
+		ret = ret .. string.fromhex(string.format("%04x", bit.lshift(string.len(k), 8)))
+		ret = ret .. k
+		ret = ret .. string.fromhex(string.format("%04x", bit.lshift(string.len(v), 8)))
+		ret = ret .. v
+	end
+	length = string.format("%04x", bit.lshift(string.len(ret), 8))
+	ret = "\x00" .. string.fromhex(length) .. "\x00" .. ret
+	return ret
+end
+
+
 portrule = function(host, port)
-	return true
+	return port.service ~= "tcp"
 end
 
 
 action = function(host, port)
+	local ret
+	local status = true
+
 	local client = nmap.new_socket()
 
 	local catch = function()
 		client:close()
-		return false
 	end
 
 	local try = nmap.new_try(catch)
 
+	local headers = {}
+	headers["REQUEST_METHOD"] = "GET"
+	headers["HTTP_HOST"] = "127.0.0.1"
+
+	client:set_timeout(10000)
 	try(client:connect(host, port))
-	try(client:send("\x00\xba\x00\x00\x0e\x00REQUEST_METHOD\x03\x00GET\t\x00HTTP_HOST\t\x00127.0.0.1\n\x00UWSGI_FILE\x6e\x00exec://echo ZGVmIGFwcGxpY2F0aW9uKGEsYik6CiAgICBiKCcyMDAgTk1BUCcsW10pCiAgICByZXR1cm4gW2Iibm1hcCJdCg==|base64 -d\x0b\x00UWSGI_APPID\x04\x00nmap"))
 
-	local ret = try(client:receive_lines(1))
+	-- first, checking not a HTTP service
+	try(client:send(make_headers_http(headers)))
 
-	local status_code = string.match(ret, "HTTP/1.%d %d+ NMAP")
-
+	status, ret = client:receive_lines(1)
+	if string.match(ret, "HTTP/1.%d %d+") then
+		try(client:close())
+		return "not a uWSGI daemon (HTTP)"
+	end
 	try(client:close())
 
-	if status_code == "HTTP/1.0 200 NMAP" or status_code == "HTTP/1.1 200 NMAP" then
-		return "uWSGI detected, returns HTTP code 200"
+	-- second, check uwsgi protocol
+	try(client:connect(host, port))
+	try(client:send(make_headers_uwsgi(headers)))
+
+	status, ret = client:receive_lines(1)
+	if string.match(ret, "HTTP/1.%d %d+") then
+		try(client:close())
+		return "uWSGI daemon detected (uWSGI)"
+	end
+	try(client:close())
+
+
+	-- third, check scgi protocol
+	try(client:connect(host, port))
+	try(client:send(make_headers_scgi(headers)))
+
+	status, ret = client:receive_lines(1)
+	if string.match(ret, "Status: %d+") then
+		try(client:close())
+		return "uWSGI daemon detected (SCGI)"
 	end
 
-	return false
+	try(client:close())
+	return "not a uWSGI daemon (unknown)"
 
 end
 

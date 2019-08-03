@@ -13,6 +13,7 @@ categories = {"default", "safe"}
 
 portrule = shortport.port_or_service(9000, "tcp")
 
+
 action = function(host, port)
 	local client = nmap.new_socket()
 
